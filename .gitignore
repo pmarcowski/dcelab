@@ -3,7 +3,7 @@
 .Rhistory
 .RData
 .Ruserdata
-*.Rproj
+
 
 # RStudio
 .Renviron
@@ -14,23 +14,9 @@
 rsconnect/
 *_cache/
 
-# Package specific
+# Package build
 *.tar.gz
 *.Rcheck/
-
-# Test results
-test-results.xml
-
-# Experiment resources
-droptoken.rds
-app/www/*
-!app/www/.gitkeep
-
-# Data
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
 
 # Logs
 *.log
@@ -48,6 +34,3 @@ Thumbs.db
 .vscode/
 *.sublime-project
 *.sublime-workspace
-
-# Archive
-archive/

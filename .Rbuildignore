@@ -1,0 +1,35 @@
+# Development files
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Rhistory$
+^\.RData$
+^\.Ruserdata$
+
+# Git
+^\.git$
+^\.github$
+^\.gitignore$
+
+# Documentation extras
+^README\.Rmd$
+^LICENSE\.md$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+
+# Development
+^data$
+
+# IDE
+^\.vscode$
+
+# CI/CD
+^\.gitlab-ci\.yml$
+^\.travis\.yml$
+^codecov\.yml$
+^appveyor\.yml$
+
+# Misc
+^preview\.png$

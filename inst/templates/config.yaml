@@ -1,0 +1,63 @@
+# DCE Experiment Configuration
+#
+# Edit this file to configure your experiment.
+# See https://github.com/pmarcowski/dcelab for documentation.
+
+# Unique identifier for this experiment
+exp_id: my_experiment
+
+# Core experimental design
+design:
+  n_sets: 30 # Total choice sets in design
+  n_total: 30 # Sets each participant sees
+  n_alts: 2 # Alternatives per choice set
+  alternatives: # Labels for alternatives
+    - "Option A"
+    - "Option B"
+
+# User interface settings
+ui:
+  buttons_text: "Which option do you prefer?" # Question text
+  shuffle_attributes: false # false, "trial", or "participant"
+  default_option: null # null, "random", or alternative name
+  no_choice: false # false or text like "Don't know"
+  explicit_choice: true # Require explicit selection
+
+# Custom attribute functions (optional)
+# custom_attributes:
+#   display_image:
+#     function_name: "display_image"
+#     attribute_label: "Image"
+
+# Data storage (optional - can use one or more providers)
+# Local storage - saves to experiment folder (good for testing)
+storage:
+  local:
+    path: "data/responses"
+# Cloud storage options - uncomment as needed
+#   s3:
+#     bucket: your-bucket
+#     prefix: data/raw
+#     region: us-east-1
+#     access_key: your-access-key
+#     secret_key: your-secret-key
+#   gsheets:
+#     sheet_id: "your-google-sheet-id"
+#     sheet_name: "responses"  # optional, defaults to exp_id
+#   dropbox:
+#     path: "/Apps/dcelab"
+#   gcs:
+#     bucket: your-gcs-bucket
+#     prefix: data/raw
+
+# Redirect after completion (optional)
+# completion:
+#   url: "https://example.com/complete"
+
+# Deployment settings (optional)
+# deployment:
+#   appname: my_experiment
+#   account:
+#     name: your-account
+#     token: your-token
+#     secret: your-secret

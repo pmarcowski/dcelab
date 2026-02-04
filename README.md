@@ -1,299 +1,175 @@
-![Preview](preview.png)
+# dcelab <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
-# Toolkit for building and deploying Discrete Choice Experiments (DCE) with Shiny
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/pmarcowski/dcelab/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pmarcowski/dcelab/actions/workflows/R-CMD-check.yaml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+<!-- badges: end -->
 
-Configurable framework for running Discrete Choice Experiments (DCE) using R Shiny.
-Built upon the [idefix](https://github.com/traets/idefix) R package for generating
-D-efficient designs, it adds custom decision attributes, experiment configuration,
-web deployment infrastructure, and automated data collection.
+A framework for creating, configuring, and deploying Discrete Choice Experiments (DCE). Scaffolds experiment directories with configurable Shiny applications, generates D-efficient experimental designs, and handles deployment to shinyapps.io with response cloud data storage.
 
-## Project Structure
-
-```
-.
-├── app/                      # Deployment directory
-│   ├── app.R                 # Main Shiny application
-│   ├── utils.R               # Helper functions
-│   └── www/                  # Experiment resources
-├── data/                     # Data directory
-│   ├── raw/                  # Raw experiment data
-│   └── processed/            # Processed results
-├── experiments/              # Experiment definitions
-│   └── example_experiment/   # Specific experiment
-│       ├── config.yaml       # Experiment configuration
-│       ├── attributes.csv    # Attributes definition
-│       ├── custom.csv        # Custom attribute functions
-│       ├── intro.txt         # Opening text
-│       └── outro.txt         # Closing text
-├── R/                        # Core functions
-│   ├── design.R              # Design generation functions
-│   └── helpers.R             # Helper functions
-└── run.R                     # Experiment preparation script
-```
-
-## Requirements
-
-- R >= 4.0.0
-- Required packages:
+## Installation
 
 ```r
-install.packages(c(
-  "shiny",
-  "shinyjs",
-  "tidyverse",
-  "idefix",
-  "aws.s3",
-  "withr",
-  "yaml",
-  "rsconnect"
-))
+# Install from GitHub
+devtools::install_github("pmarcowski/dcelab")
 ```
 
-## Features
-
-- Dynamic choice experiment interface
-- D-optimal experimental design generation
-- Binary and multinomial choice options
-- Configurable data storage to cloud (AWS S3)
-- Progress tracking and completion redirect
-- Configurable attributes and levels
-- Local and shinyapps.io deployment options
-
-## Getting Started
-
-1. Clone the repository
-2. Install required packages
-3. Create your experiment directory following `example_experiment` template
-4. Configure cloud authentication
-5. Configure shinyapps.io deployment (optional)
-6. Run preparation script
-7. Deploy the Shiny app (locally or to shinyapps.io)
-
-## Setup
-
-### 1. Configure AWS S3 storage:
-
-Set up your S3 bucket and obtain AWS credentials. Then configure the storage section in your `config.yaml`:
+## Quick Start
 
 ```r
-# Data storage configuration
-# Available providers: s3
-storage:
-  s3:
-    bucket: bucket-name                         # S3 bucket name
-    prefix: data/raw                            # Path prefix for data storage
-    region: your-region                         # AWS region
-    access_key: your-access-key                 # AWS access key
-    secret_key: your-secret-key                 # AWS secret key
+library(dcelab)
+
+# Try it
+run_demo()  # Creates and launches a demo experiment
+
+# Or create your own:
+create_experiment("my_study")
+
+# 2. Edit the configuration files:
+#    - config.yaml    → design parameters, UI settings, storage
+#    - attributes.csv → attribute names and levels
+
+# 3. Prepare (validate config & generate D-efficient design)
+prepare_experiment("my_study")
+
+# 4. Test locally
+run_experiment("my_study")
+
+# 5. Deploy to shinyapps.io
+deploy_experiment("my_study", account = "your-account")
 ```
 
-### 2. Configure your experiment in `experiments/example_experiment/config.yaml`:
+## Workflow
+
+### 1. Create Experiment
+
+```r
+create_experiment("my_savings_study")
+```
+
+Creates a directory with:
+```
+my_savings_study/
+├── app.R           # Shiny application
+├── utils.R         # App utility functions
+├── config.yaml     # Experiment configuration
+├── attributes.csv  # Attribute definitions
+├── intro.txt       # Introduction text
+├── outro.txt       # Closing text
+└── www/            # Static assets
+```
+
+### 2. Configure Your Experiment
+
+Edit `config.yaml`:
 
 ```yaml
-# DCE Experiment Configuration
-#
-# YAML Formatting Rules:
-# - Quote text with spaces/special chars: "Option A", "$5/month"
-# - Leave unquoted: numbers, booleans (true/false), null, simple-text
-#
-# Required Configuration:
-# 1. exp_id                   - Experiment identifier
-# 2. design                   - Core experiment settings
-#      - n_sets               - Total number of choice sets
-#      - n_total              - Sets per participant
-#      - n_alts               - Alternatives per choice
-#      - alternatives         - Alternative labels
-#      - alt_cte              - Alternative-specific constants
-# 3. ui                       - Interface settings
-#      - buttons_text         - Text above choice buttons
-#      - shuffle_attributes   - Randomize attribute order
-#      - default_option       - Choice preselection
-#      - no_choice            - Optional no-choice option
-#      - explicit_choice      - OK button behavior on choice
-#
-# Additional Configuration:
-# - storage            - Data management settings
-# - completion         - Post-experiment redirect settings
-# - custom_attributes  - Custom display function definitions
-# - deployment         - shinyapps.io deployment settings
+exp_id: savings_study
 
-# Unique identifier for this experiment
-exp_id: example_experiment
-
-# Core experimental design configuration
 design:
-  n_sets: 30                                    # Total number of choice sets in the design
-  n_total: 30                                   # Number of sets each participant will see
-  n_alts: 2                                     # Number of alternatives per choice set
-  alternatives:                                 # Labels shown for each alternative
-    - "Option A"                                # First alternative label
-    - "Option B"                                # Second alternative label
+  n_sets: 30           # Total choice sets
+  n_total: 15          # Sets per participant
+  n_alts: 2            # Alternatives per set
+  alternatives:
+    - "Plan A"
+    - "Plan B"
 
-# User interface customization
 ui:
-  buttons_text: "Which option do you prefer?"   # Text shown above choice buttons
-  shuffle_attributes: false                     # Whether to randomize attribute order
-  default_option: random                        # Choice preselection: must be null, "random", or option name
-  no_choice: "Don't know"                       # Set to false to disable no-choice option
-  explicit_choice: true                         # Whether explicit click on option is required
-
-# Custom attribute definitions (optional)
-custom_attributes:
-  display_image:
-    function_name: "display_image"              # Function name in custom.R
-    attribute_label: "Displayed image"          # Label shown in the interface
-
-  display_text:
-    function_name: "display_majority_choice"    # Function name in custom.R
-    attribute_label: "Majority choice"          # Label shown in the interface
-
-# Data storage configuration (optional)
-# Available providers: s3
-storage:
-  s3:
-    bucket: bucket-name                         # S3 bucket name
-    prefix: data/raw                            # Path prefix for data storage
-    region: your-region                         # AWS region
-    access_key: your-access-key                 # AWS access key
-    secret_key: your-secret-key                 # AWS secret key
-
-# Post-experiment settings
-completion:
-  url: "your-redirect-url"                      # Redirect URL after completion
-
-# Deployment configuration
-deployment:
-  enabled: false                                # Whether to auto-deploy
-  appname: null                                 # Custom application name (defaults to exp_id)
-  account:
-    name: your-account                          # Account name
-    token: your-token                           # Account token
-    secret: your-secret                         # Account secret
+  buttons_text: "Which savings plan do you prefer?"
+  shuffle_attributes: "participant"
+  explicit_choice: true
 ```
 
-### 3. Define attributes (columns) and their levels (rows) in `attributes.csv`
-
-#### Attributes Configuration
-
-Define experiment attributes in `attributes.csv`:
-- Each column represents an attribute
-- Each row represents possible levels for that attribute
-- Empty cells are ignored
-- UTF-8 encoding required
-
-Example:
+Edit `attributes.csv`:
 
 ```csv
-How much would I save monthly from my salary?,Number of your friends participating in savings program,What amount would the employer contribute?,Is there a raise planned in the employment contract?,Current savings in your account,What amount would the State contribute?,Displayed image
-1%,None of your friends currently uses the savings program,1% of monthly salary,No planned raise,Less than 1000,0% of monthly salary (No State participation),1
-2%,10% of your friends currently uses the savings program,2% of monthly salary,Planned raise of 10% salary after 3-month probation period,1000-5000,1% of monthly salary,2
-5%,30% of your friends currently uses the savings program,5% of monthly salary,Planned raise of 10% salary after 6-month probation period,5000-10000,2% of monthly salary,3
+Monthly savings,Employer match,Account access
+1% of salary,No match,Anytime
+2% of salary,1% match,After 1 year
+5% of salary,2% match,After 5 years
 ```
 
-#### Custom Attributes
-
-This toolkit supports custom attribute display functions configured in `config.yaml`:
-
-```yaml
-custom_attributes:
-  display_image:
-    function_name: "display_image"
-    attribute_label: "Displayed image"
-  display_text:
-    function_name: "display_majority_choice"
-    attribute_label: " "
-```
-
-> `attribute_label` must match attribute label (column) defined in `attributes.csv` for design-dependent custom attributes.
-
-> `function_name` must match the corresponding function name defined in `custom.R`.
-
-Custom attribute display functions can be defined in `experiments/{exp_id}/custom.R`. Each function receives a `context` object containing:
-
-- `choice_set`: The current choice set matrix
-- `col_index`: Current column being processed
-- `config`: Configuration parameters
-- `alternatives`: Available alternatives
-
-> Custom attribute functions must return a character string (HTML allowed)
-
-Example custom function:
-```r
-display_image <- function(context) {
-  level <- as.numeric(context$choice_set["Displayed image", context$col_index])
-  if (!is.numeric(level) || level < 1 || level > 3) return("")
-  sprintf('<img src="image%d.svg" style="width:48px;height:48px;">', level)
-}
-```
-
-## Deployment
-
-### Local Deployment
-
-Run the preparation script and launch the application locally:
+### 3. Prepare & Run
 
 ```r
-source("run.R")                               # Prepare experiment
-shiny::runApp("app")                          # Run locally
+prepare_experiment("my_savings_study")   # Generates D-efficient design
+run_experiment("my_savings_study")       # Opens in browser
 ```
 
-### shinyapps.io Deployment
-
-1. Set up shinyapps.io account and obtain credentials from the dashboard
-2. Configure deployment in `config.yaml`:
-   - Set `deployment.enabled: true`
-   - Add account credentials
-   - Optionally specify custom app name
-3. Run the preparation script:
+### 4. Deploy
 
 ```r
-   source("run.R")                            # Will prepare and deploy if enabled
+# Deploy to shinyapps.io
+deploy_experiment("my_savings_study", account = "your-account")
 ```
-
-The preparation script will:
-- Create necessary directories
-- Copy configuration files
-- Generate D-optimal design
-- Set up data paths
-- Deploy to shinyapps.io (if enabled)
 
 ## Data Storage
 
-Response data is automatically saved to the configured storage provider. When using AWS S3,
-data is saved as text files containing responses with attribute levels, using the format
-`{experiment_id}_{timestamp}.txt`. The storage location within the S3 bucket follows the
-pattern `{prefix}/{experiment_id}/{filename}`. By default, the prefix is set to
-`data/raw` in the example configuration, but you can adjust this path in the storage
-settings to match your needs.
+Configure one or more storage providers in `config.yaml`:
 
-## Experiment Preparation
+| Provider | Package | Config Fields |
+|----------|---------|---------------|
+| `local` | (built-in) | `path` |
+| `s3` | aws.s3 | `bucket`, `prefix`, `region`, `access_key`, `secret_key` |
+| `gsheets` | googlesheets4 | `sheet_id`, `sheet_name` (optional) |
+| `dropbox` | rdrop2* | `path` |
+| `gcs` | googleCloudStorageR | `bucket`, `prefix` |
 
-To set up a new experiment:
+*rdrop2 archived on CRAN; install from GitHub: `remotes::install_github("karthik/rdrop2")`
 
-1. Create a new experiment directory in `experiments/` (e.g., `experiments/example_experiment/`) containing:
-   - `config.yaml`: Experiment configuration
-   - `attributes.csv`: Attribute definitions
-   - `intro.txt`: Introduction text
-   - `outro.txt`: Closing text
-   - `custom.R`: Custom attribute display functions (if using custom attributes)
+### Example: Local + Google Sheets
 
-2. Run the preparation script `run.R`:
-   - Creates necessary directories (`app/www/`, `data/raw/example_experiment/`)
-   - Copies experiment resources to the deployment directory
-   - Generates and saves the experimental design
-   - Sets up data paths
-   - Deploys to shinyapps.io (if configured)
+```yaml
+storage:
+  local:
+    path: "data/responses"
+  gsheets:
+    sheet_id: "1abc..."
+```
 
-The design generation uses helper functions from `R/design.R`.
+## Custom Attributes
 
-> Check `run.R` for implementation details and `R/design.R` for design generation helper functions.
+Add custom display functions by creating `custom.R`:
+
+```r
+display_image <- function(context) {
+  level <- context$choice_set["Product", context$col_index]
+  sprintf('<img src="images/%s.png" width="100">', level)
+}
+```
+
+Then reference in `config.yaml`:
+
+```yaml
+custom_attributes:
+  product_image:
+    function_name: "display_image"
+    attribute_label: "Product Image"
+```
+
+## API Reference
+
+| Function | Description |
+|----------|-------------|
+| `create_experiment()` | Scaffold new experiment directory |
+| `prepare_experiment()` | Validate config & generate design |
+| `run_experiment()` | Run locally for testing |
+| `deploy_experiment()` | Deploy to shinyapps.io |
+| `validate_config()` | Validate configuration |
+| `save_experiment_data()` | Save response data |
+
+## Dependencies
+
+- [idefix](https://CRAN.R-project.org/package=idefix) - D-efficient design generation
+- [shiny](https://shiny.rstudio.com/) - Web application framework
+- [rsconnect](https://rstudio.github.io/rsconnect/) - Deployment to shinyapps.io
+- [aws.s3](https://github.com/cloudyr/aws.s3) - S3 storage integration
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
+This project is licensed under the GNU General Public License v3.0 - see LICENSE for details.
 
 ## Authors
 
-Przemyslaw Marcowski, PhD <p.marcowski@gmail.com>
-
-Jakub Krawiec, PhD <krawiecjm@gmail.com>
+- Przemyslaw Marcowski (p.marcowski@gmail.com)
+- Jakub Krawiec (krawiecjm@gmail.com)

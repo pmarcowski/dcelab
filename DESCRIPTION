@@ -1,0 +1,38 @@
+Package: dcelab
+Title: Create and Deploy Discrete Choice Experiments
+Version: 0.1.0
+Authors@R: c(
+    person("Przemyslaw", "Marcowski", , "p.marcowski@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7342-6561")),
+    person("Jakub", "Krawiec", , "krawiecjm@gmail.com", role = "aut"))
+Description: Framework for creating, configuring, and deploying Discrete 
+    Choice Experiments (DCE). Scaffolds experiment directories with 
+    configurable Shiny applications, generates D-efficient experimental 
+    designs using 'idefix', validates configurations, and handles 
+    deployment to 'shinyapps.io' with response data storage to AWS S3.
+License: GPL-3
+URL: https://github.com/pmarcowski/dcelab
+BugReports: https://github.com/pmarcowski/dcelab/issues
+Depends: 
+    R (>= 4.0.0)
+Imports:
+    aws.s3,
+    checkmate,
+    cli,
+    idefix,
+    MASS,
+    rsconnect,
+    shiny,
+    shinyjs,
+    withr,
+    yaml
+Suggests:
+    googleCloudStorageR,
+    googlesheets4,
+    mockery,
+    rdrop2,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
